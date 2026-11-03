@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kho đề Olympic Vật lý — Catalog từ Physics Translate</title>
+<meta name="description" content="Danh mục đề thi Olympic Vật lý và tuyển tập chuyên đề, phân loại theo kỳ thi, năm, chuyên đề — link về bài đăng gốc.">
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e4e4e0;--acc:#1f5fbf;--free:#1c7c4a;--paid:#a35a00}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1d1d20;--ink:#ececec;--mute:#9a9aa0;--line:#2e2e33;--acc:#6ea0ff;--free:#4cc38a;--paid:#f0a050}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{padding:32px 20px 12px;max-width:1100px;margin:auto}
+h1{margin:0 0 6px;font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0;font-size:.95rem}
+.bar{position:sticky;top:0;background:var(--bg);z-index:2;border-bottom:1px solid var(--line)}
+.controls{max-width:1100px;margin:auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=search],select{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+input[type=search]{flex:1 1 260px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:1100px;margin:auto;padding:16px 20px 48px}
+.stats{color:var(--mute);font-size:.9rem;margin:4px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.card h3{margin:0;font-size:1rem;line-height:1.35}
+.meta{display:flex;gap:6px;flex-wrap:wrap;font-size:.78rem}
+.tag{padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--mute)}
+.tag.free{color:var(--free);border-color:currentColor}
+.tag.paid{color:var(--paid);border-color:currentColor}
+.card p{margin:0;color:var(--mute);font-size:.88rem;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.card a.go{margin-top:auto;color:var(--acc);text-decoration:none;font-weight:600;font-size:.9rem}
+.card a.go:hover{text-decoration:underline}
+.empty{color:var(--mute);text-align:center;padding:40px}
+footer{max-width:1100px;margin:auto;padding:20px;color:var(--mute);font-size:.82rem;border-top:1px solid var(--line)}
+footer a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kho đề Olympic Vật lý</h1>
+  <p class="sub">Danh mục đề thi & tuyển tập chuyên đề do page <a href="https://www.facebook.com/physicstranslatevn" target="_blank" rel="noopener">Physics Translate</a> đăng tải — phân loại để tra cứu nhanh, mọi tài liệu mở tại bài gốc.</p>
+</header>
+<div class="bar"><div class="controls">
+  <input id="q" type="search" placeholder="Tìm: IPhO, Đài Loan, nhiệt học, 2026…" aria-label="Tìm kiếm">
+  <select id="year" aria-label="Năm"><option value="">Mọi năm</option></select>
+  <div class="chips" id="cats"></div>
+</div></div>
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="grid" id="grid"></div>
+</main>
+<footer>
+  Website chỉ là mục lục, không lưu trữ hay phân phối lại tài liệu. Bản quyền nội dung thuộc Physics Translate và các ban tổ chức kỳ thi. Tuyển tập trả phí vui lòng mua trực tiếp tại page.
+  <span id="updated"></span>
+</footer>
+<script>
+const CATS=["Tất cả","Đề thi Olympic","Tuyển tập (trả phí)","Chuỗi NEXUS","Bài toán chọn lọc","Physics in Life"];
+let DATA=[], cat="Tất cả";
+const $=s=>document.querySelector(s);
+const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d");
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function render(){
+  const q=norm($("#q").value), y=$("#year").value;
+  const list=DATA.filter(d=>(cat==="Tất cả"||d.category===cat)&&(!y||String(d.year)===y)&&(!q||norm(d.title+" "+d.summary+" "+(d.competition||"")).includes(q)));
+  $("#stats").textContent=`${list.length} / ${DATA.length} mục`;
+  $("#grid").innerHTML=list.length?list.map(d=>`
+    <article class="card">
+      <div class="meta">
+        <span class="tag">${esc(d.category)}</span>
+        ${d.competition&&d.competition!==d.category.replace("Chuỗi ","")?`<span class="tag">${esc(d.competition)}</span>`:""}
+        ${d.year?`<span class="tag">${d.year}</span>`:""}
+        <span class="tag ${d.free?"free":"paid"}">${d.free?"Miễn phí":"Trả phí"}</span>
+      </div>
+      <h3>${esc(d.title)}</h3>
+      <p>${esc(d.summary)}</p>
+      ${d.date?`<div class="meta"><span>Đăng: ${esc(d.date)}</span></div>`:""}
+      <a class="go" href="${esc(d.url)}" target="_blank" rel="noopener">Xem bài gốc trên Facebook →</a>
+    </article>`).join(""):`<div class="empty">Không có mục phù hợp.</div>`;
+}
+fetch("data/posts.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
+  DATA=j.items; $("#updated").textContent=` · Cập nhật: ${j.updated}`;
+  const years=[...new Set(DATA.map(d=>d.year).filter(Boolean))].sort((a,b)=>b-a);
+  $("#year").innerHTML+=years.map(y=>`<option>${y}</option>`).join("");
+  $("#cats").innerHTML=CATS.map(c=>`<button class="chip" aria-pressed="${c===cat}">${c}</button>`).join("");
+  $("#cats").onclick=e=>{if(e.target.matches(".chip")){cat=e.target.textContent;[...$("#cats").children].forEach(b=>b.setAttribute("aria-pressed",b.textContent===cat));render();}};
+  $("#q").oninput=render; $("#year").onchange=render; render();
+});
+</script>
+</body>
+</html>
