@@ -1,11 +1,28 @@
 """Gộp bài mới vào data/posts.json.
 Dùng: python3 scripts/merge.py new.json   (new.json = [{"id":"pfbid...","title":"...","date":"dd/mm/yyyy"}])
-Bài đã có (trùng id) bị bỏ qua. Bài mới được chèn lên đầu (sau các tuyển tập trả phí)."""
+Bài đã có bị bỏ qua: so khớp theo TIÊU ĐỀ (id pfbid của Facebook đổi mỗi lần tải trang nên không dùng để lọc trùng được). Bài mới được chèn lên đầu (sau các tuyển tập trả phí)."""
 import json, re, sys, datetime, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DB = ROOT / "data" / "posts.json"
 BASE = "https://www.facebook.com/physicstranslatevn/posts/"
 COUNTRY = {"ĐÀI LOAN":"Đài Loan","TRUNG QUỐC":"Trung Quốc","SINGAPORE":"Singapore","THÁI LAN":"Thái Lan","INDONESIA":"Indonesia","PHÁP":"Pháp","ROMANIA":"Romania","NHẬT BẢN":"Nhật Bản","HÀN QUỐC":"Hàn Quốc","MỸ":"Mỹ","NGA":"Nga","ẤN ĐỘ":"Ấn Độ","ÚC":"Úc","CANADA":"Canada","ANH":"Anh","ĐỨC":"Đức","IPHO":"IPhO","APHO":"APhO","EUPHO":"EuPhO","VPHO":"VPhO","HSGQG":"HSGQG"}
+
+def title_key(title):
+    """Khoá so khớp tiêu đề: NEXUS theo số thứ tự; còn lại bỏ dấu câu, chữ 'năm', 'Physics Translate', không phân biệt hoa thường."""
+    u = title.lower()
+    m = re.match(r"\W*nexus\W*#?\s*(\d+)", u)
+    if m: return "nexus-" + m.group(1)
+    u = re.sub(r"physics translate", " ", u)
+    u = re.sub(r"\bnăm\b", " ", u)
+    return re.sub(r"[\W_]+", "", u)
+
+def is_known(title, keys):
+    import difflib
+    k = title_key(title)
+    if k in keys: return True
+    if k.startswith("nexus-"): return False
+    nums = re.findall(r"\d+", k)
+    return any(not x.startswith("nexus-") and re.findall(r"\d+", x) == nums and difflib.SequenceMatcher(None, k, x).ratio() >= 0.9 for x in keys)
 
 def classify(pid, title, date=""):
     t = title.strip().strip("[]"); U = t.upper()
@@ -32,7 +49,13 @@ def classify(pid, title, date=""):
 if __name__ == "__main__":
     db = json.loads(DB.read_text(encoding="utf-8"))
     have = {x["id"] for x in db["items"]}
-    new = [classify(n["id"], n["title"], n.get("date", "")) for n in json.load(open(sys.argv[1], encoding="utf-8")) if n["id"] not in have]
+    keys = {title_key(x["title"]) for x in db["items"]}
+    new = []
+    for n in json.load(open(sys.argv[1], encoding="utf-8")):
+        if n["id"] in have or is_known(n["title"], keys):
+            continue
+        keys.add(title_key(n["title"]))
+        new.append(classify(n["id"], n["title"], n.get("date", "")))
     paid = [x for x in db["items"] if not x["free"]]; rest = [x for x in db["items"] if x["free"]]
     db["items"] = paid + [x for x in new if not x["free"]] + [x for x in new if x["free"]] + rest
     db["updated"] = datetime.date.today().strftime("%d/%m/%Y")
